@@ -20,7 +20,7 @@
                     <span>Dashboard</span></a>
             </li>
 
-            <?php #if ($_SESSION['user_type'] == 'doctor') { ?>
+            <?php if ($_SESSION['user_type'] == 'doctor') { ?>
             <!-- Divider -->
             <hr class="sidebar-divider">
 
@@ -28,10 +28,10 @@
             <li class="nav-item ">
                 <a class="nav-link" href="users.php" >
                     <i class="fas fa-fw fa-user"></i>
-                    <span>Users</span>
+                    <span>Doctors</span>
                 </a>
             </li>
-            <?php #} ?>
+            <?php } ?>
 
             <!-- Divider -->
             <hr class="sidebar-divider">

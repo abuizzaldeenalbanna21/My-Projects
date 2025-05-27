@@ -1,3 +1,42 @@
+<?php
+ob_start();
+session_start();
+include "database.php";
+
+$db = new Database($conn);
+
+
+// If form is submitted (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $full_name = $_POST['full_name'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $specialty = $_POST['specialty'] ?? '';
+    $phone = $_POST['phone'] ?? '';
+
+    $updateData = [
+        'full_name' => $full_name,
+        'email' => $email,
+        'specialty' => $specialty,
+        'phone' => $phone
+    ];
+
+    // Update record
+    $updated = $db->update('doctors', $updateData, 'id = '.$_GET["id"]);
+
+    if ($updated) {
+        // Redirect or success message
+        header("Location: users-edit.php?id={$_GET['id']}&success=1");
+        exit;
+    } else {
+        echo "<div class='alert alert-danger text-center'>Update failed. Please try again.</div>";
+    }
+}
+
+
+$doctor = $db->select('doctors' , "id = ".$_GET["id"])[0];
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -83,30 +122,22 @@
                     <!-- Edit User Form -->
                     <div class="card shadow mb-4">
                         <div class="card-body">
-                            <form>
+                            <form action="" method="post">
                                 <div class="form-group">
-                                    <label for="userName">First Name</label>
-                                    <input type="text" class="form-control" id="userName" placeholder="Enter First Name" value="Saleh">
-                                </div>
-                                <div class="form-group">
-                                    <label for="userName">Last Name</label>
-                                    <input type="text" class="form-control" id="userName" placeholder="Enter Last Name" value="Al-qaq">
+                                    <label for="userName">Name</label>
+                                    <input type="text" class="form-control" name="full_name" id="userName" placeholder="Enter First Name" value="<?php echo $doctor["full_name"] ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="userEmail">Email</label>
-                                    <input type="email" class="form-control" id="userEmail" placeholder="Enter Email" value="salehalqaq1995@gmail.com">
+                                    <input type="email" class="form-control" name="email" id="userEmail" placeholder="Enter Email" value="<?php echo $doctor["email"] ?>">
                                 </div>
                                 <div class="form-group">
-                                    <label for="userType">Type of Work</label>
-                                    <select class="form-control" id="userType">
-                                        <option value="Doctor" selected>Doctor</option>
-                                        <option value="Patient">Patient</option>
-                                        <option value="Secretary">Secretary</option>
-                                    </select>
+                                    <label for="specialty">specialty</label>
+                                    <input type="text" class="form-control" name="specialty" id="specialty" placeholder="Enter Email" value="<?php echo $doctor["specialty"] ?>">
                                 </div>
                                 <div class="form-group">
                                     <label for="userPhone">Phone Number</label>
-                                    <input type="text" class="form-control" id="userPhone" placeholder="Enter Phone Number" value="+123456789">
+                                    <input type="text" class="form-control" id="userPhone" name="phone" placeholder="Enter Phone Number" value="<?php echo $doctor["phone"] ?>">
                                 </div>
                                 <div class="text-center">
                                     <button type="submit" class="btn btn-primary">Save Changes</button>

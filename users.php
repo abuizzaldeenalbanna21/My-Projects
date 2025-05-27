@@ -1,11 +1,11 @@
 <?php
 ob_start();
 session_start();
-include "config.php";
+include "database.php";
 
-// Fetch all users (doctors)
-$stmt = $conn->query("SELECT * FROM doctors");
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$db = new Database($conn);
+$doctors = $db->select('doctors');
+
 ?>
 
 <!DOCTYPE html>
@@ -19,7 +19,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Users</title>
+    <title>Doctors</title>
 
     <!-- Custom fonts for this template -->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -86,7 +86,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     <!-- Page Heading -->
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h1 class="h3 text-gray-800">Users</h1>
+                        <h1 class="h3 text-gray-800">Doctors</h1>
                         <div>
                             <a href="adduser.php" class="btn btn-success btn-sm">
                                 <i class="fas fa-plus"></i>
@@ -95,7 +95,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
 
-                    <!-- Users Table -->
+                    <!-- Doctors Table -->
                     <div class="card shadow mb-4">
                         <div class="card-body">
                             <div class="table-responsive">
@@ -133,20 +133,20 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </thead>
                                     <tbody>
                                         <!-- New Doctors List -->
-                                        <?php foreach ($users as $user): ?>
+                                        <?php foreach ($doctors as $key => $doctor): ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($user['id']) ?></td>
-                                                <td><?= htmlspecialchars($user['name']) ?></td>
-                                                <td><?= htmlspecialchars($user['email']) ?></td>
-                                                <td><?= htmlspecialchars($user['type_work']) ?></td>
-                                                <td><?= htmlspecialchars($user['phone']) ?></td>
+                                                <td><?= $key + 1?></td>
+                                                <td><?= htmlspecialchars($doctor['full_name']) ?></td>
+                                                <td><?= htmlspecialchars($doctor['email']) ?></td>
+                                                <td><?= htmlspecialchars($doctor['specialty']) ?></td>
+                                                <td><?= htmlspecialchars($doctor['phone']) ?></td>
                                                 <td>
                                                     <div class="d-flex justify-content-center align-items-center">
-                                                        <a href="users-edit.php?id=<?= $user['id'] ?>"
+                                                        <a href="users-edit.php?id=<?= $doctor['id'] ?>"
                                                             class="fas fa-edit"></a>
                                                         <span class="mx-2"></span>
-                                                        <a href="#" class="fas fa-trash text-danger delete-user"
-                                                            data-id="<?= $user['id'] ?>"></a>
+                                                        <a href="delete-doctor.php?id=<?= $doctor['id'] ?>" class="fas fa-trash text-danger "
+                                                            data-id="<?= $doctor['id'] ?>"></a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -287,16 +287,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 updateTable();
             });
 
-            // JavaScript for Delete Button
-            const deleteButtons = document.querySelectorAll('.fa-trash');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const row = this.closest('tr');
-                    if (confirm('Are you sure you want to delete this user?')) {
-                        row.remove();
-                    }
-                });
-            });
 
         </script>
 
