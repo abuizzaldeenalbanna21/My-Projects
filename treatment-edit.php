@@ -54,11 +54,9 @@
 
     <!-- Page Wrapper -->
     <div id="wrapper">
-
         <!-- Sidebar -->
-         <?php include 'sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
         <!-- End of Sidebar -->
-
         <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
 
@@ -83,22 +81,21 @@
                     <!-- Edit Treatment Form -->
                     <div class="card shadow mb-4">
                         <div class="card-body">
-                            <form id="editTreatmentForm">
-                                <div id="treatmentFields">
-                                    <div class="treatment-group">
-                                        <div class="form-group">
-                                            <label for="treatmentName1">Treatment Name</label>
-                                            <input type="text" id="treatmentName1" class="form-control" placeholder="Enter treatment name" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="treatmentDescription1">Treatment Description</label>
-                                            <textarea id="treatmentDescription1" class="form-control" rows="4" placeholder="Enter treatment description" required></textarea>
-                                        </div>
-                                        <hr>
-                                    </div>
+                            <form action="" method="post">
+                                <div class="form-group">
+                                    <label for="treatmentName">Treatment Name</label>
+                                    <input type="text" name="treatment_name" id="treatmentName" class="form-control" required>
                                 </div>
-                                <div class="text-center mb-4">
-                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <div class="form-group">
+                                    <label for="treatmentDescription">Treatment Description</label>
+                                    <textarea name="treatment_description" id="treatmentDescription" class="form-control" rows="3" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="treatmentPrice">Treatment Price</label>
+                                    <input type="number" name="treatment_price" id="treatmentPrice" step="0.01" min="0" class="form-control" required>
+                                </div>
+                                <div class="text-center">
+                                    <button type="submit" name="save_treatment" class="btn btn-primary">Save Changes</button>
                                 </div>
                             </form>
                         </div>

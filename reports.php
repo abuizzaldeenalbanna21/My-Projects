@@ -1,3 +1,63 @@
+<?php
+session_start();
+require_once 'config.php';
+require_once 'database.php';
+
+$db = new Database($conn);
+
+$userType = $_SESSION['user_type'] ?? '';
+if($_GET['appointment_id']){
+
+    $appointment_id = $_GET['appointment_id'] ?? 0;
+
+
+    ////////////////////////////////////////////////////
+    
+    // جلب بيانات التقرير إن وُجد
+    $query = "SELECT * FROM appointments_report WHERE appointment_id = :appointment_id";
+    $stmt = $conn->prepare($query);
+    $stmt->execute(['appointment_id' => $appointment_id]);
+    $report = $stmt->fetch(PDO::FETCH_ASSOC);
+    /////////////////////////////////////////////////////////
+
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // استقبال البيانات من الفورم
+    $treatment_plan     = $_POST['treatment_plan'] ?? '';
+    $session_reports    = $_POST['session_reports'] ?? '';
+    $x_rays_note        = $_POST['x_rays_note'] ?? '';
+    $treatment_written  = $_POST['treatment_written'] ?? '';
+    $medications        = $_POST['medications'] ?? '';
+    $x_rays_file        = null;
+
+    // معالجة رفع ملف الأشعة
+    if (isset($_FILES['xrayUpload']) && $_FILES['xrayUpload']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = 'uploads/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        $fileName = basename($_FILES['xrayUpload']['name']);
+        $filePath = $uploadDir . time() . '_' . $fileName;
+        if (move_uploaded_file($_FILES['xrayUpload']['tmp_name'], $filePath)) {
+            $x_rays_file = $filePath;
+        }
+    }
+
+    // تحقق إذا كان السجل موجودًا
+    $stmt = $conn->prepare("SELECT id FROM appointments_report WHERE appointment_id = ?");
+    $stmt->execute([$appointment_id]);
+    $exists = $stmt->fetchColumn();
+
+    if ($exists) {
+        // تحديث
+        $stmt = $conn->prepare("UPDATE appointments_report SET treatment_plan=?, session_reports=?, x_rays_file=?, x_rays_note=?, treatment_written=?, medications=? WHERE appointment_id=?");
+        $stmt->execute([$treatment_plan, $session_reports, $x_rays_file, $x_rays_note, $treatment_written, $medications, $appointment_id]);
+    } else {
+        // إدخال جديد
+        $stmt = $conn->prepare("INSERT INTO appointments_report (appointment_id, treatment_plan, session_reports, x_rays_file, x_rays_note, treatment_written, medications) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$appointment_id, $treatment_plan, $session_reports, $x_rays_file, $x_rays_note, $treatment_written, $medications]);
+    }
+    $saved = true;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -69,97 +129,132 @@
                 <!-- End of Topbar -->
 
                 <!-- Begin Page Content -->
-                <div class="container-fluid">
-                    <!-- Page Heading -->
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h1 class="h3 mb-4 text-gray-800">Reports</h1>
-                        <a href="medical_history.php" class="btn btn-secondary btn-circle" title="Return">
-                            <i class="fas fa-arrow-left"></i>
-                        </a>
-                    </div>
-
-                    <!-- Last Upload Date -->
-                    <div class="mb-3">
-                        <h6 class="text-gray-800" style="font-size: x-small;">
-                            Last Upload Date: 
-                            <span class="text-primary">2025-02-10</span>
-                        </h6>
-                    </div>
-
-                    <!-- Reports Section -->
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <ul class="list-group">
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Treatment Plan</span>
-                                        <!-- Removed date badge -->
-                                    </div>
-                                    <div class="mt-2">
-                                        <input type="text" class="form-control" id="treatmentPlanTextBox" 
-                                        placeholder="Enter details about Treatment Plan">
-                                    </div>
-                                </li>
-                                
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Session Reports</span>
-                                        <!-- Removed date badge -->
-                                    </div>
-                                    <div class="mt-2">
-                                        <input type="text" class="form-control" id="sessionReportsTextBox" 
-                                        placeholder="Enter details about Session Reports">
-                                    </div>
-                                </li>
-                                
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>X-Rays</span>
-                                        <!-- Removed date badge -->
-                                    </div>
-                                    <div class="mt-2 d-flex align-items-center">
-                                        <input type="file" class="form-control-file mr-3" id="xrayUpload" accept="image/*">
-                                        <a href="path/to/xray-image.jpg" download class="btn btn-primary btn-sm">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    </div>
-                                    <div class="mt-2">
-                                        <input type="text" class="form-control" id="xrayTextBox" 
-                                        placeholder="Enter details about existing reports">
-                                    </div>
-                                </li>
-                                
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Treatment Written</span>
-                                        <!-- Removed date badge -->
-                                    </div>
-                                    <div class="mt-2">
-                                        <input type="text" class="form-control" id="treatmentWrittenTextBox" 
-                                        placeholder="Enter details about Treatment Written">
-                                    </div>
-                                </li>
-                                
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span>Medications</span>
-                                        <!-- Removed date badge -->
-                                    </div>
-                                    <div class="mt-2">
-                                        <input type="text" class="form-control" id="medicationsTextBox" 
-                                        placeholder="Enter details about Medications">
-                                    </div>
-                                </li>
-                               
-                                <div class="mt-3 text-center">
-                                    <button class="btn btn-success btn-sm" id="saveButton">
-                                        <i class="fas fa-save"></i> Save
-                                    </button>
-                                </div>
-                            </ul>
+                <form action="reports.php?appointment_id=<?= $appointment_id ?>" method="post" enctype="multipart/form-data">
+                    <div class="container-fluid">
+                        <?php if (!empty($saved)) { ?>
+                            <div class="alert alert-success text-center" role="alert" id="savedAlert">
+                               Saved successfully
+                            </div>
+                        <?php } ?>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h1 class="h3 mb-4 text-gray-800">Reports</h1>
                         </div>
+
+                        <div class="mb-3">
+                            <h6 class="text-gray-800" style="font-size: x-small;">
+                                Last Upload Date: 
+                                <span class="text-primary"><?= htmlspecialchars($report['updated_at'] ?? '') ?></span>
+                            </h6>
+                        </div>
+                        <?php if ($userType === 'doctor') { ?>
+                        <div class="card shadow mb-4">
+                            <div class="card-body">
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <span>Treatment Plan</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="treatment_plan" value="<?= htmlspecialchars($report['treatment_plan'] ?? '') ?>" placeholder="Enter details about Treatment Plan">
+                                        </div>
+                                    </li>
+
+                                    <li class="list-group-item">
+                                        <span>Session Reports</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="session_reports" value="<?= htmlspecialchars($report['session_reports'] ?? '') ?>" placeholder="Enter details about Session Reports">
+                                        </div>
+                                    </li>
+
+                                    <li class="list-group-item">
+                                        <span>X-Rays</span>
+                                        <div class="mt-2 d-flex align-items-center">
+                                            <input type="file" class="form-control-file mr-3" name="xrayUpload" id="xrayUpload" accept="image/*">
+                                            <?php if (!empty($report['x_rays_file'])): ?>
+                                                <a href="<?= $report['x_rays_file'] ?>" download class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="x_rays_note" value="<?= htmlspecialchars($report['x_rays_note'] ?? '') ?>" placeholder="Enter details about existing reports">
+                                        </div>
+                                    </li>
+
+                                  <!--  <li class="list-group-item">
+                                        <span>Treatment Written</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="treatment_written" value="<?= htmlspecialchars($report['treatment_written'] ?? '') ?>" placeholder="Enter details about Treatment Written">
+                                        </div>
+                                    </li> -->
+
+                                    <li class="list-group-item">
+                                        <span>Medications</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="medications" value="<?= htmlspecialchars($report['medications'] ?? '') ?>" placeholder="Enter details about Medications">
+                                        </div>
+                                    </li>
+
+                                    <div class="mt-3 text-center">
+                                        <button type="submit" class="btn btn-success btn-sm" id="saveButton">
+                                            <i class="fas fa-save"></i> Save
+                                        </button>
+                                    </div>
+                                </ul>
+                            </div>
+                        </div>
+                        <?php }else{?>
+                                <div class="card shadow mb-4">
+                            <div class="card-body">
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <span>Treatment Plan</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="treatment_plan" value="<?= htmlspecialchars($report['treatment_plan'] ?? '') ?>" placeholder="Enter details about Treatment Plan" disabled>
+                                        </div>
+                                    </li>
+
+                                    <li class="list-group-item">
+                                        <span>Session Reports</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="session_reports" value="<?= htmlspecialchars($report['session_reports'] ?? '') ?>" placeholder="Enter details about Session Reports" disabled>
+                                        </div>
+                                    </li>
+
+                                    <li class="list-group-item">
+                                        <span>X-Rays</span>
+                                        <div class="mt-2 d-flex align-items-center">
+                                            <!-- <input type="file" class="form-control-file mr-3" name="xrayUpload" id="xrayUpload" accept="image/*"> -->
+                                            <?php if (!empty($report['x_rays_file'])): ?>
+                                                <a href="<?= $report['x_rays_file'] ?>" download class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="x_rays_note" value="<?= htmlspecialchars($report['x_rays_note'] ?? '') ?>" placeholder="Enter details about existing reports" disabled>
+                                        </div>
+                                    </li>
+
+                                    <!--<li class="list-group-item">
+                                        <span>Treatment Written</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="treatment_written" value="<?= htmlspecialchars($report['treatment_written'] ?? '') ?>" placeholder="Enter details about Treatment Written" disabled>
+                                        </div>
+                                    </li> -->
+
+                                    <li class="list-group-item">
+                                        <span>Medications</span>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control" name="medications" value="<?= htmlspecialchars($report['medications'] ?? '') ?>" placeholder="Enter details about Medications" disabled>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <?php }?>
                     </div>
-                </div>
+                </form>
+
+
                 <!-- /.container-fluid -->
 
             </div>
@@ -186,25 +281,10 @@
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="index.html">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="js/sb-admin-2.min.js"></script>
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -233,6 +313,21 @@
       <!-- Page level custom scripts -->
       <script src="js/demo/datatables-demo.js"></script>
 
+      <script>
+    // Hide the saved alert after 3 seconds
+    $(document).ready(function() {
+        setTimeout(function() {
+            $('#savedAlert').fadeOut(500);
+        }, 3000);
+    });
+</script>
+
 </body>
 
 </html>
+<?php
+}else{
+    header('Location: invoice_items.php');
+    exit;
+}
+?>

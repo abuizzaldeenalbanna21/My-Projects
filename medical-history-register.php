@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $patient_email) {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Dental Clinic - Medical History</title>
+    <title>Dental Clinic - Patient Inquiries</title>
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 </head>
@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $patient_email) {
         <div class="card-body p-0">
             <div class="p-5">
                 <div class="text-center">
-                    <h1 class="h4 text-gray-900 mb-4">Medical History</h1>
+                    <h1 class="h4 text-gray-900 mb-4">Patient Inquiries</h1>
                 </div>
                 <form class="user" method="post">
                     <div class="form-group">

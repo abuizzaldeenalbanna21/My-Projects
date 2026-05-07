@@ -19,7 +19,7 @@ $doctors = $db->select('doctors');
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Doctors</title>
+    <title>Dental Clinic- Doctors</title>
 
     <!-- Custom fonts for this template -->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -107,7 +107,7 @@ $doctors = $db->select('doctors');
                                                 style="width: auto;">
                                                 <option value="2">2</option>
                                                 <option value="5">5</option>
-                                                <option value="10">10</option>
+                                                <option value="10" selected>10</option>
                                                 <option value="25">25</option>
                                                 <option value="50">50</option>
                                             </select> entries

@@ -1,5 +1,35 @@
 <?php
 session_start();
+require_once 'config.php';
+require_once 'database.php';
+
+$db = new Database($conn);
+$userType = $_SESSION['user_type'] ?? '';
+$name = $_SESSION['name'] ?? '';
+$id = $_SESSION['id'] ?? '';
+// جلب الأطباء والمرضى من قاعدة البيانات
+$patients = $db->select("patients");
+$doctors = $db->select("doctors");
+$treatments = $db->select("treatments");
+
+// حفظ الموعد الجديد
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = [
+        'patient_id' => $userType == "doctor" ?  $_POST['patient_id'] : $id,
+        'doctor_id' => $_POST['doctor_id'],
+        'day' => $_POST['day'],
+        'date' => $_POST['date'],
+        'time' => $_POST['time'],
+        'treatment_id' => $_POST['treatment']
+    ];
+
+    if ($db->insert("appointments", $data)) {
+        header("Location: appointment.php");
+        exit;
+    } else {
+        $error = "حدث خطأ أثناء إضافة الموعد.";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +53,12 @@ session_start();
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
 
-    
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 
     <style>
         /* Ensure the sidebar is fixed and content scrolls underneath */
@@ -37,7 +72,8 @@ session_start();
         }
 
         #content-wrapper {
-            margin-left: 250px; /* Adjust based on sidebar width */
+            margin-left: 250px;
+            /* Adjust based on sidebar width */
         }
 
         @media (max-width: 768px) {
@@ -60,138 +96,190 @@ session_start();
     <div id="wrapper">
 
         <!-- Sidebar -->
-         <?php include 'sidebar.php'; ?>
+        <?php include 'sidebar.php'; ?>
         <!-- End of Sidebar -->
 
         <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
-
+            <?php include 'navbar.php'; ?>
             <!-- Main Content -->
             <div id="content">
+                
 
-               <!-- Topbar -->
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                <!-- Input Table -->
+                <div class="container-fluid">
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-2 text-gray-800">Add Appointment</h1>
+                        <a href="appointment.php" class="btn btn-circle btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                    </div>
+                    <div class="card shadow mb-4">
 
-                    <!-- Sidebar Toggle (Topbar) -->
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
-                    <!-- Topbar Navbar -->
-                    <?php include 'navbar.php'; ?>
-                    <!-- End of Topbar -->
-                </nav>
-                   
-            <!-- Input Table -->
-            <div class="container-fluid">
-                <!-- Page Heading -->
-                 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                    <h1 class="h3 mb-2 text-gray-800">Add Appointment</h1>
-                    <a href="appointment.php" class="btn btn-circle btn-secondary">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                </div>
-                <div class="card shadow mb-4">
-                    
-                    <div class="card-body">
-                        <form>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="patientName">Patient Name</label>
-                                        <input type="text" class="form-control" id="patientName" placeholder="Enter Patient Name">
+                        <div class="card-body">
+                            <?php if (isset($error)) : ?>
+                                <div class="alert alert-danger"><?= $error ?></div>
+                            <?php endif; ?>
+
+                            <form method="POST" action="">
+                                <div class="row">
+                                    <?php if ($userType === 'doctor') { ?>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Patient</label>
+                                            <select name="patient_id" class="form-control" required>
+                                                <option value="">Select Patient</option>
+                                                <?php foreach ($patients as $patient): ?>
+                                                    <option value="<?= $patient['id'] ?>"><?= htmlspecialchars($patient['first_name']) . " " . htmlspecialchars($patient['last_name'])  ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
+                                    <?php }?>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Date</label>
+                                            <input type="text" name="date" class="form-control" id="appointment-date" required>
+                                        </div>
+                                    </div>
+
+                                   <script>
+                                    // الأيام بالترتيب حسب getDay()
+                                    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+                                    flatpickr("#appointment-date", {
+                                        dateFormat: "Y-m-d",
+                                        minDate: "today", // ✅ هذا يمنع اختيار أي تاريخ قبل اليوم الحالي
+                                        disable: [
+                                            function(date) {
+                                                // منع الجمعة (5) والسبت (6)
+                                                return (date.getDay() === 5 || date.getDay() === 6);
+                                            }
+                                        ],
+                                        onChange: function(selectedDates, dateStr, instance) {
+                                            if (selectedDates.length > 0) {
+                                                const date = selectedDates[0];
+                                                const dayName = days[date.getDay()];
+
+                                                const daySelect = document.getElementById('appointment-day');
+                                                // تعيين القيمة
+                                                daySelect.value = dayName;
+                                            }
+                                        }
+                                    });
+                                </script>
+
                                 </div>
+
+                                <div class="row">
+
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="day">Day</label>
-                                        <select id="day" class="form-control">
-                                            <option value="selected" selected>Select Day</option>
-                                            <option value="Saturday">Saturday</option>
+                                        <label>Day</label>
+                                        <input type="text" name="day" class="form-control" id="appointment-day" required readonly>
+                                        <!-- <select name="day" class="form-control" id="appointment-day" required readonly >
+                                            <option value="">Select Day</option>
                                             <option value="Sunday">Sunday</option>
                                             <option value="Monday">Monday</option>
                                             <option value="Tuesday">Tuesday</option>
                                             <option value="Wednesday">Wednesday</option>
                                             <option value="Thursday">Thursday</option>
-                                        </select>                                        </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="date">Date</label>
-                                        <input type="date" class="form-control" id="date">
+                                            <option value="Saturday">Saturday</option>
+                                        </select> -->
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="time">Time</label>
-                                        <select id="time" class="form-control">
-                                            <!-- Time options will be dynamically populated -->
-                                        </select>
+
+                                   
+
+
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Time</label>
+                                            <select name="time" class="form-control" id="appointment-time" required>
+                                                <!-- سيتم تعبئته ديناميكياً -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        document.getElementById('appointment-date').addEventListener('change', function () {
+                                            const selectedDate = this.value;
+
+                                            if (!selectedDate) return;
+
+                                            fetch('get_available_times.php?date=' + selectedDate)
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    const timeSelect = document.getElementById('appointment-time');
+                                                    timeSelect.innerHTML = ''; // تصفير القائمة
+
+                                                    if (data.length === 0) {
+                                                        timeSelect.innerHTML = '<option value="">No available times</option>';
+                                                        return;
+                                                    }
+
+                                                    data.forEach(time => {
+                                                        const option = document.createElement('option');
+                                                        option.value = time;
+                                                        option.textContent = time;
+                                                        timeSelect.appendChild(option);
+                                                    });
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error fetching available times:', error);
+                                                });
+                                        });
+                                        </script>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Doctor</label>
+                                            <select name="doctor_id" class="form-control" required>
+                                                <option value="">Select Doctor</option>
+                                                <?php foreach ($doctors as $doctor): ?>
+                                                    <option value="<?= $doctor['id'] ?>"><?= htmlspecialchars($doctor['full_name']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Treatment</label>
+                                            <select name="treatment" class="form-control" required>
+                                                <option value="">Select Treatment</option>
+                                                <?php foreach ($treatments as $treatment): ?>
+                                                    <option value="<?= $treatment['id'] ?>"><?= htmlspecialchars($treatment['name'])  ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="doctor">Doctor</label>
-                                        <select id="doctor" class="form-control">
-                                            <option value="Dr. Smith" selected>Dr. Smith</option>
-                                            <option value="Dr. Brown">Dr. Brown</option>
-                                            <option value="Dr. Taylor">Dr. Taylor</option>
-                                            <option value="Dr. Davis">Dr. Davis</option>
-                                            <option value="Dr. Martinez">Dr. Martinez</option>
-                                        </select>                                        </div>
+
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary">Add Appointment</button>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="treatment">Treatment</label>
-                                        <input type="text" class="form-control" id="treatment" placeholder="Enter Treatment">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary">Add Appointment</button>
-                            </div>
-                        </form>
-                    </div>
-                    <!-- Footer -->
-                    <footer class="sticky-footer bg-white">
-                        <div class="container my-auto">
-                            <div class="copyright text-center my-auto">
-                                <span>Copyright &copy; Developer By . Ali . Albanna 2025</span>
-                            </div>
+                            </form>
                         </div>
-                    </footer>
-                    <!-- End of Footer -->
+                        <!-- Footer -->
+                        <footer class="sticky-footer bg-white">
+                            <div class="container my-auto">
+                                <div class="copyright text-center my-auto">
+                                    <span>Copyright &copy; Developer By . Ali . Albanna 2025</span>
+                                </div>
+                            </div>
+                        </footer>
+                        <!-- End of Footer -->
+                    </div>
                 </div>
+                <!-- End of Input Table -->
             </div>
-            <!-- End of Input Table -->
-        </div>
-            
+
         </div>
     </div>
     <!-- End of Content Wrapper -->
 
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="index.html">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -204,7 +292,7 @@ session_start();
     <!-- Page level custom scripts -->
     <script src="js/demo/chart-area-demo.js"></script>
     <script>
-        document.getElementById('day').addEventListener('change', function () {
+        document.getElementById('day').addEventListener('change', function() {
             const day = this.value;
             const timeSelect = document.getElementById('time');
             timeSelect.innerHTML = ''; // Clear existing options
@@ -230,4 +318,5 @@ session_start();
         document.getElementById('day').dispatchEvent(new Event('change'));
     </script>
 </body>
+
 </html>

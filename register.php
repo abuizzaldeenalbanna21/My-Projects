@@ -21,8 +21,12 @@ include "config.php"; // الاتصال بقاعدة البيانات
     <div class="container">
         <div class="card o-hidden border-0 shadow-lg my-5">
             <div class="card-body p-0">
-                <div class="row">
-                    <div class="col-lg-5 d-none d-lg-block bg-register-image"></div>
+                <div class="row" style="display: flex; align-items: center;">
+                    <div class="col-lg-5 d-none d-lg-block bg-register-image"
+                        style="display: flex; justify-content: center; align-items: center;">
+                        <img src="img/image-removebg-preview.png" alt="Dentist Image" class="img-fluid mb-4"
+                            style="max-width: 300px; margin-top: 20px; margin-left: 70px;">
+                    </div>
                     <div class="col-lg-7">
                         <div class="p-5">
                             <div class="text-center">
@@ -31,32 +35,38 @@ include "config.php"; // الاتصال بقاعدة البيانات
                             <form class="user" action="" method="post">
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <input type="text" name="first_name" class="form-control form-control-user" placeholder="First Name" required>
+                                        <input type="text" name="first_name" class="form-control form-control-user"
+                                            placeholder="First Name" required>
                                     </div>
                                     <div class="col-sm-6">
-                                        <input type="text" name="last_name" class="form-control form-control-user" placeholder="Last Name" required>
+                                        <input type="text" name="last_name" class="form-control form-control-user"
+                                            placeholder="Last Name" required>
                                     </div>
                                     <div class="col-sm-6"><br>
-                                        <input type="tel" name="phone" class="form-control form-control-user" placeholder="Phone Number" required>
+                                        <input type="tel" name="phone" class="form-control form-control-user"
+                                            placeholder="Phone Number" required>
                                     </div>
                                     <div class="col-sm-6"><br>
-                                        <input type="date" name="dob" class="form-control form-control-user" placeholder="Date of Birth" required>
+                                        <input type="date" name="dob" class="form-control form-control-user"
+                                            placeholder="Date of Birth" required>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="email" name="email" class="form-control form-control-user" placeholder="Email Address" required>
+                                    <input type="email" name="email" class="form-control form-control-user"
+                                        placeholder="Email Address" required>
                                 </div>
                                 <div class="form-group row">
                                     <div class="col-sm-6 mb-3 mb-sm-0">
                                         <select name="gender" class="form-control form-control-user" required>
-                                            <option value="">Select Gender</option>
+                                            <option value="" disabled selected>Select Gender</option>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                         </select>
                                     </div>
                                     <div class="col-sm-6">
-                                        <input type="password" name="password" class="form-control form-control-user" placeholder="Password" required>
+                                        <input type="password" name="password" class="form-control form-control-user"
+                                            placeholder="Password" required>
                                     </div>
                                 </div>
 

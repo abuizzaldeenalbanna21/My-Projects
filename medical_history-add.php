@@ -142,9 +142,7 @@
                             <!-- End of Footer -->
                         </div>
                     </div>
-                    <!-- End of Card Wrapper -->
-
-                    
+                    <!-- End of Card Wrapper -->                    
                 </div>
             </div>
                 <script>

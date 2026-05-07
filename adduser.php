@@ -59,7 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                     <div class="col-md-12">
                                         <label>Full Name</label>
                                         <input type="text" class="form-control" name="full_name"
-                                            placeholder="Enter First Name" required>
+                                            placeholder="Enter Full Name" required>
                                     </div>
                                 </div>
 
